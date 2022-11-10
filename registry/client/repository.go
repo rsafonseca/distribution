@@ -492,6 +492,11 @@ func (ms *manifests) Get(ctx context.Context, dgst digest.Digest, options ...dis
 			dgst, err := digest.Parse(resp.Header.Get("Docker-Content-Digest"))
 			if err == nil {
 				*contentDgst = dgst
+			} else {
+                                descriptor, err := descriptorFromResponse(resp)
+                                if err != nil {
+                                        *contentDgst = descriptor.Digest
+                                }
 			}
 		}
 		mt := resp.Header.Get("Content-Type")
