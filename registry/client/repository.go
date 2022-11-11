@@ -488,26 +488,23 @@ func (ms *manifests) Get(ctx context.Context, dgst digest.Digest, options ...dis
 	if resp.StatusCode == http.StatusNotModified {
 		return nil, distribution.ErrManifestNotModified
 	} else if SuccessStatus(resp.StatusCode) {
-		if contentDgst != nil {
-			dgst, err := digest.Parse(resp.Header.Get("Docker-Content-Digest"))
-			if err == nil {
-				*contentDgst = dgst
-			} else {
-                                descriptor, err := descriptorFromResponse(resp)
-                                if err != nil {
-                                        *contentDgst = descriptor.Digest
-                                }
-			}
-		}
 		mt := resp.Header.Get("Content-Type")
 		body, err := ioutil.ReadAll(resp.Body)
 
 		if err != nil {
 			return nil, err
 		}
-		m, _, err := distribution.UnmarshalManifest(mt, body)
+		m, desc, err := distribution.UnmarshalManifest(mt, body)
 		if err != nil {
 			return nil, err
+		}
+		if contentDgst != nil {
+			dgst, err := digest.Parse(resp.Header.Get("Docker-Content-Digest"))
+			if err == nil {
+				*contentDgst = dgst
+			} else {
+				*contentDgst = desc.Digest
+			}
 		}
 		return m, nil
 	}
